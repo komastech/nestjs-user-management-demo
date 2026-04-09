@@ -1,9 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './user.entity';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { FindUsersDto } from '../dto/find-users.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { User } from '../entities/user.entity';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -12,7 +14,9 @@ export class UsersService {
     private readonly repo: Repository<User>,
   ) {}
 
+  private logger = new Logger(UsersService.name);
   async create(dto: CreateUserDto) {
+    this.logger.log(`Creating user ${dto.email}`);
     const email = dto.email.toLowerCase();
 
     const existing = await this.repo.findOne({ where: { email } });
@@ -22,8 +26,33 @@ export class UsersService {
     return this.repo.save(user);
   }
 
-  findAll() {
-    return this.repo.find({ order: { id: 'ASC' } });
+  async findAll(query: FindUsersDto) {
+    const { search, page = 1, limit = 10 } = query;
+
+    const qb = this.repo.createQueryBuilder('user');
+
+    if (search) {
+      qb.where(
+        'user.email ILIKE :search OR user.firstName ILIKE :search OR user.lastName ILIKE :search',
+        { search: `%${search}%` },
+      );
+    }
+
+    const skip = (page - 1) * limit;
+
+    qb.skip(skip).take(limit).orderBy('user.id', 'ASC');
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: number) {
