@@ -99,8 +99,7 @@ GET    /api/v1/health
 ```
 
 `GET /api/v1/users` conserve le contrat historique et retourne un tableau.
-`GET /api/v2/users` ajoute la recherche et la pagination et retourne
-`{ data, meta }`.
+`GET /api/v2/users` ajoute la recherche et la pagination et retourne `{ data, meta }`.
 
 ## Exemple de payload
 
@@ -115,40 +114,41 @@ GET    /api/v1/health
 
 ## Setup local
 
-Installer les dependances:
+Copier le fichier d'environnement :
+
+```bash
+cp .env.example .env
+```
+
+Lancer l'application et la base de donnees :
+
+```bash
+docker compose up
+```
+
+L'API est disponible sur `http://localhost:3000/api` et Swagger sur `http://localhost:3000/docs`.
+
+Pour le developpement sans Docker :
 
 ```bash
 npm install
-```
-
-Lancer PostgreSQL avec Docker:
-
-```bash
-docker run --name nest-users-db \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=nest_users \
-  -p 5432:5432 \
-  -d postgres
-```
-
-Creer un fichier `.env` a la racine:
-
-```env
-PORT=3000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_NAME=nest_users
-SWAGGER_PATH=docs
-NODE_ENV=development
-```
-
-Demarrer l'application en mode developpement:
-
-```bash
 npm run start:dev
+```
+
+## CI/CD
+
+Le pipeline GitHub Actions (`.github/workflows/ci.yml`) se declenche a chaque push sur `main` :
+
+1. Installation des dependances
+2. Execution des tests
+3. Compilation TypeScript
+4. Build de l'image Docker multi-platform (amd64 + arm64)
+5. Push de l'image sur GitHub Container Registry (`ghcr.io`)
+
+L'image est disponible sur :
+
+```
+ghcr.io/komastech/nestjs-user-management-demo:latest
 ```
 
 ## Scripts disponibles
@@ -177,8 +177,8 @@ Le bootstrap applicatif active:
 
 La configuration est centralisee dans:
 
-- [src/config/app.config.ts](/Users/messy/Documents/WORKING/dev/nest-user-api/src/config/app.config.ts)
-- [src/config/database.config.ts](/Users/messy/Documents/WORKING/dev/nest-user-api/src/config/database.config.ts)
+- [src/config/app.config.ts](src/config/app.config.ts)
+- [src/config/database.config.ts](src/config/database.config.ts)
 
 ## TypeORM et schema de base
 
@@ -189,7 +189,7 @@ Le projet utilise actuellement:
 
 `synchronize: true` est volontairement pratique pour le developpement local car il accelere le bootstrap et evite de gerer une migration a chaque petit changement d'entite.
 
-En environnement d'entreprise, cette option ne devrait pas etre utilisee telle quelle sur des environnements partages ou de production. La bonne approche est de passer a des migrations versionnees TypeORM, ou a un mecanisme equivalent, afin de garantir:
+En environnement d'entreprise, cette option ne devrait pas etre utilisee telle quelle sur des environnements partages ou de production. La bonne approche est de passer a des migrations versionnees TypeORM afin de garantir:
 
 - la tracabilite des changements de schema
 - la reproductibilite entre dev, staging et production
@@ -198,9 +198,7 @@ En environnement d'entreprise, cette option ne devrait pas etre utilisee telle q
 
 ## Gestion des erreurs
 
-Un filtre HTTP reutilisable est present ici:
-
-- [src/common/filters/http-exception.filter.ts](/Users/messy/Documents/WORKING/dev/nest-user-api/src/common/filters/http-exception.filter.ts)
+Un filtre HTTP reutilisable est present dans [src/common/filters/http-exception.filter.ts](src/common/filters/http-exception.filter.ts).
 
 Il normalise les erreurs HTTP en JSON avec:
 
@@ -210,13 +208,10 @@ Il normalise les erreurs HTTP en JSON avec:
 - `method`
 - `message`
 
-Note: le fichier est ajoute au projet, mais il n'est pas encore branche globalement dans `main.ts`.
-
 ## Tests
 
-Etat actuel de verification:
+```bash
+npm test
+```
 
-- `npm run build` passe
-- `npm test -- --runInBand` passe
-
-Le test e2e peut echouer dans un environnement sandbox qui interdit l'ouverture du port de test (`EPERM 0.0.0.0`). Ce point depend du runtime local, pas du refactor applicatif lui-meme.
+4 tests unitaires couvrent le controller et le service users.
