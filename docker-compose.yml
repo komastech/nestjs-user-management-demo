@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: ghcr.io/komastech/nestjs-user-management-demo:latest
     container_name: nestjs-user-management-api
     ports:
       - "3000:3000"
