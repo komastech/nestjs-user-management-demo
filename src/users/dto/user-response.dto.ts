@@ -23,3 +23,25 @@ export class UserResponseDto {
   @ApiProperty()
   updatedAt!: Date;
 }
+
+export class UsersPageMetaDto {
+  @ApiProperty()
+  total!: number;
+
+  @ApiProperty()
+  page!: number;
+
+  @ApiProperty()
+  limit!: number;
+
+  @ApiProperty()
+  totalPages!: number;
+}
+
+export class UsersPageResponseDto {
+  @ApiProperty({ type: [UserResponseDto] })
+  data!: UserResponseDto[];
+
+  @ApiProperty({ type: UsersPageMetaDto })
+  meta!: UsersPageMetaDto;
+}

@@ -31,6 +31,10 @@ export class UsersRepository {
     return this.repository.findOne({ where: { email } });
   }
 
+  findAll() {
+    return this.repository.find({ order: { id: 'ASC' } });
+  }
+
   async findMany(query: FindUsersDto) {
     const { search, page = 1, limit = 10 } = query;
     const queryBuilder = this.repository.createQueryBuilder('user');

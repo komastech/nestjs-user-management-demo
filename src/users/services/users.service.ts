@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { FindUsersDto } from '../dto/find-users.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -27,7 +32,13 @@ export class UsersService {
     return this.userMapper.toResponse(savedUser);
   }
 
-  async findAll(query: FindUsersDto) {
+  async findAll() {
+    const users = await this.usersRepository.findAll();
+
+    return this.userMapper.toResponseList(users);
+  }
+
+  async findAllPaginated(query: FindUsersDto) {
     const { data, meta } = await this.usersRepository.findMany(query);
 
     return {
@@ -50,7 +61,8 @@ export class UsersService {
     if (dto.email) {
       const email = dto.email.toLowerCase();
       const existing = await this.usersRepository.findByEmail(email);
-      if (existing && existing.id !== id) throw new BadRequestException('Email already exists');
+      if (existing && existing.id !== id)
+        throw new BadRequestException('Email already exists');
       dto.email = email;
     }
 

@@ -82,6 +82,7 @@ Le service `users` n'utilise plus directement TypeORM dans sa logique metier. Le
 
 - API base: `http://localhost:3000/api`
 - API v1: `http://localhost:3000/api/v1`
+- API v2: `http://localhost:3000/api/v2`
 - Swagger: `http://localhost:3000/docs`
 - Health check: `GET /api/v1/health`
 
@@ -90,11 +91,16 @@ Le service `users` n'utilise plus directement TypeORM dans sa logique metier. Le
 ```text
 POST   /api/v1/users
 GET    /api/v1/users
+GET    /api/v2/users?search=&page=1&limit=10
 GET    /api/v1/users/:id
 PATCH  /api/v1/users/:id
 DELETE /api/v1/users/:id
 GET    /api/v1/health
 ```
+
+`GET /api/v1/users` conserve le contrat historique et retourne un tableau.
+`GET /api/v2/users` ajoute la recherche et la pagination et retourne
+`{ data, meta }`.
 
 ## Exemple de payload
 

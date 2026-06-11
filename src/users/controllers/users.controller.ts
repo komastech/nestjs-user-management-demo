@@ -10,13 +10,16 @@ import {
   Patch,
   Post,
   Query,
-  Version
+  Version,
 } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { FindUsersDto } from '../dto/find-users.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserResponseDto } from '../dto/user-response.dto';
+import {
+  UsersPageResponseDto,
+  UserResponseDto,
+} from '../dto/user-response.dto';
 import { UsersService } from '../services/users.service';
 
 @ApiTags('users')
@@ -30,11 +33,17 @@ export class UsersController {
     return this.service.create(dto);
   }
 
-  @Version('2')
   @Get()
   @ApiOkResponse({ type: UserResponseDto, isArray: true })
-  findAll(@Query() query: FindUsersDto) {
-    return this.service.findAll(query);
+  findAllV1() {
+    return this.service.findAll();
+  }
+
+  @Version('2')
+  @Get()
+  @ApiOkResponse({ type: UsersPageResponseDto })
+  findAllV2(@Query() query: FindUsersDto) {
+    return this.service.findAllPaginated(query);
   }
 
   @Get(':id')
