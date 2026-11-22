@@ -174,15 +174,16 @@ Le bootstrap applicatif ([src/main.ts](src/main.ts)) active :
 
 - un préfixe global `api`
 - un versioning URI avec `v1` comme version par défaut
-- une validation globale Nest via `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`)
-- Swagger sur `/docs`
+- une validation globale via `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`), définie dans [src/common/pipes/validation.pipe.ts](src/common/pipes/validation.pipe.ts)
+- un filtre d'exceptions global (`HttpExceptionFilter`)
+- Swagger sur `/docs` (configurable)
 
 La configuration est centralisée dans :
 
 - [src/config/app.config.ts](src/config/app.config.ts)
 - [src/config/database.config.ts](src/config/database.config.ts)
 
-À noter : le port (`3000`) et le chemin Swagger (`docs`) sont pour l'instant codés en dur dans `main.ts` ; les variables `PORT` et `SWAGGER_PATH` de `app.config.ts` ne sont pas encore utilisées.
+Le port d'écoute et le chemin Swagger se règlent via les variables `PORT` (défaut `3000`) et `SWAGGER_PATH` (défaut `docs`).
 
 ## TypeORM et schéma de base
 
@@ -204,7 +205,7 @@ En environnement d'entreprise, cette option ne devrait pas être utilisée telle
 
 Un filtre HTTP réutilisable est présent dans [src/common/filters/http-exception.filter.ts](src/common/filters/http-exception.filter.ts).
 
-Il normalise les erreurs HTTP en JSON avec :
+Il est enregistré globalement dans `main.ts` et normalise toutes les erreurs en JSON avec :
 
 - `statusCode`
 - `timestamp`
@@ -212,7 +213,7 @@ Il normalise les erreurs HTTP en JSON avec :
 - `method`
 - `message`
 
-Ce filtre n'est pas encore enregistré globalement (ni via `app.useGlobalFilters`, ni via `APP_FILTER`) : les erreurs suivent donc pour l'instant le format par défaut de NestJS.
+Les exceptions non HTTP sont journalisées et renvoyées en `500` avec le message `Internal server error`, sans exposer la stack.
 
 ## Tests
 
