@@ -139,12 +139,19 @@ npm run start:dev
 
 ## CI/CD
 
-Le pipeline GitHub Actions (`.github/workflows/ci.yml`) se déclenche à chaque push et pull request sur `main` :
+Le pipeline GitHub Actions (`.github/workflows/ci.yml`) se déclenche à chaque push et pull request sur `main`. Il contient deux jobs :
 
-1. Installation des dépendances
-2. Exécution des tests
-3. Compilation TypeScript
-4. Build de l'image Docker multi-plateforme (amd64 + arm64) et push sur GitHub Container Registry (`ghcr.io`) — uniquement sur push, pas sur pull request
+1. **`test`** (push et PR)
+   - installation des dépendances
+   - tests unitaires
+   - tests e2e contre un vrai PostgreSQL 16, démarré par GitHub Actions comme `services:` du job
+   - compilation TypeScript
+2. **`docker`** (seulement si `test` passe, via `needs: test`)
+   - build de l'image multi-plateforme (amd64 + arm64), avec le cache Docker de GitHub Actions (`type=gha`)
+   - **sur PR** : l'image est seulement construite, pour vérifier le Dockerfile, sans rien publier
+   - **sur push vers `main`** : l'image est publiée sur GitHub Container Registry (`ghcr.io`)
+
+Dans le Dockerfile, le stage de build TypeScript tourne sur l'architecture native du runner (`--platform=$BUILDPLATFORM`). Seule l'installation des dépendances de prod passe par l'émulation arm64.
 
 L'image est taguée avec le SHA du commit et `latest` :
 
@@ -219,7 +226,14 @@ Les exceptions non HTTP sont journalisées et renvoyées en `500` avec le messag
 
 ```bash
 npm test          # tests unitaires
-npm run test:e2e  # tests end-to-end
+npm run test:e2e  # tests end-to-end (nécessite PostgreSQL)
 ```
 
-4 tests unitaires portent sur le module users : 3 sur le controller (dont les listes v1 et v2) et 1 test de définition du service. Un test e2e vérifie l'endpoint de health check.
+4 tests unitaires portent sur le module users : 3 sur le controller (dont les listes v1 et v2) et 1 test de définition du service.
+
+Les tests e2e ([test/](test/)) couvrent l'endpoint de health check et le cycle complet des utilisateurs contre une vraie base : création, unicité de l'email, validation et format d'erreur, listes v1/v2, mise à jour, suppression. La table `users` est vidée au début de la suite : utiliser une base dédiée aux tests. En local :
+
+```bash
+docker compose up -d db
+DB_HOST=localhost DB_PORT=5432 DB_USERNAME=postgres DB_PASSWORD=postgres DB_NAME=postgres npm run test:e2e
+```

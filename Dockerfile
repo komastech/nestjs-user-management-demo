@@ -1,13 +1,16 @@
-# Stage 1 : build TypeScript dev
-FROM node:lts-alpine AS builder
+# Stage 1 : build TypeScript
+# --platform=$BUILDPLATFORM : ce stage tourne toujours sur l'architecture native
+# du runner (pas d'émulation QEMU). Le dist/ produit est du JavaScript, valable
+# pour toutes les architectures.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2 : prod
-FROM node:lts-alpine AS runner
+# Stage 2 : prod (construit pour chaque plateforme cible)
+FROM node:24-alpine AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package*.json ./
